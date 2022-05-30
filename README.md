@@ -1,4 +1,4 @@
-# BayesianAnalysis
+# Bayesian Analysis
 
 Project using the Bayesian Analysis in R, 
 where I implemented a Bayesian inference of Diabetes using the Glucose values and 
