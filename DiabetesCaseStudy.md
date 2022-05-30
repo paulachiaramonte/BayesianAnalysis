@@ -174,17 +174,11 @@ hist(log(Glucose[y==0]), breaks=20, main="Histogram of Log(Glucose) Non-Diabetic
 
 ![](DiabetesCaseStudy_files/figure-gfm/unnamed-chunk-6-1.png)<!-- --> We
 will assume that the Glucose, $X$, follows a lognormal distribution:
-$$
-X\mid\mu,\tau\sim \text{Lognormal}\left(\mu,\frac{1}{\tau}\right)
-$$
+$$X\mid\mu, \tau\sim \text{Lognormal} \left(\mu,\frac{1}{\tau}\right)$$
 and we assume the conjugate prior distribution for the normal
 distribution, that is, a normal-gamma prior distribution:
-$$
-\mu\mid\tau\sim \text{Normal}\left(m,\frac{1}{c\tau}\right)
-$$
-$$
-\tau\sim\text{Gamma}\left(\frac{a}{2},\frac{b}{2}\right)
-$$
+$$\mu\mid\tau\sim \text{Normal}\left(m,\frac{1}{c\tau}\right)$$
+$$\tau\sim\text{Gamma}\left(\frac{a}{2},\frac{b}{2}\right)$$
 
 We set the prior parameters.We can use a non informative prior:
 
@@ -195,7 +189,7 @@ m=0; c=0.01; a=0.01; b=0.01;
 
 Given the Glucose $\text{data}=\left\{x_1,\ldots,x_n\right\}$, the
 posterior is equal to:
-$$\mu\mid\tau,\text{data}\sim \text{Normal}\left(m^*,\frac{1}{c^*\tau}\right $$
+$$\mu\mid\tau,\text{data}\sim \text{Normal}\left(m^*,\frac{1}{c^*\tau}\right$$
 $$\tau\mid\text{data}\sim\text{Gamma}\left(\frac{a^*}{2},\frac{b^*}{2}\right)$$
 where, 
     $$m^{\ast}   =\frac{c m+n\bar{x}}{c+n},\] \[c^{\ast}=c+n,$$
@@ -254,7 +248,7 @@ NGacontour(mu,tau,m.ast,c.ast,a.ast,b.ast,col="red",add=T)
 ![](DiabetesCaseStudy_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 With this sample from the joint posterior distribution we can obtain the
-95% credible interval for \(\mu\):
+95% credible interval for $\mu$:
 
 ``` r
 quantile(mu.post,c(0.025,0.975))
@@ -280,7 +274,7 @@ glucose, given the observed Glucose values:
 
 $$\Pr\left(X_{n+1}\gt log(Y_i)\mid \text{data}\right)$$
 
-If we assume a lognormal-gamma for (\(\mu, \tau\)), the predictive
+If we assume a lognormal-gamma for ($\mu, \tau$), the predictive
 density is ascaled, shifted Student distribution:
 
 $$\log(X_{n+1})\mid\text{data}\sim\text{SS-Student}\left(m^*,\frac{(c^*+1)b^*}{c^*a^*},a^*\right)$$
