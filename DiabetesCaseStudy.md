@@ -28,7 +28,7 @@ implement a Logistic Bayesian Model for calculating the probability of a
 patient having Diabetes as a function of the different diagnostic
 measurements of each person in the dataset.
 
-![Diabetes](https://columnadigital.com/wp-content/uploads/2021/12/diabetes.jpg)
+![Diabetes][https://res.cloudinary.com/grohealth/image/upload/c_fill,f_auto,fl_lossy,h_650,q_auto,w_1085/v1581695681/DCUK/Content/causes-of-diabetes.png]
 
 ## Data Exploration of the Data
 
