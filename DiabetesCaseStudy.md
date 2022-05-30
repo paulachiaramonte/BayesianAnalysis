@@ -189,8 +189,8 @@ m=0; c=0.01; a=0.01; b=0.01;
 
 Given the Glucose $X_i$ for i in $1, ..., n$, the
 posterior is equal to:
-$$\mu\mid\tau,X \sim $$
-$$\tau\mid\text{data}\sim\text{Gamma}(\frac{a^*}{2},\frac{b^*}{2})$$
+$$\mu\mid\tau,X \sim \text{Normal} (m^*,\frac{1}{c^*\tau})
+$$\tau \mid \text{data} \sim \text{Gamma}(\frac{a^*}{2},\frac{b^*}{2})$$
 where, 
     $$m^{\ast}   =\frac{c m+n\bar{x}}{c+n},\] \[c^{\ast}=c+n,$$
     $$a^{\ast}   =a+n,$$
