@@ -173,29 +173,34 @@ hist(log(Glucose[y==0]), breaks=20, main="Histogram of Log(Glucose) Non-Diabetic
 ```
 
 ![](DiabetesCaseStudy_files/figure-gfm/unnamed-chunk-6-1.png)<!-- --> We
-will assume that the Glucose, \(X\), follows a lognormal distribution:
-\[X\mid\mu,\tau\sim \text{Lognormal}\left(\mu,\frac{1}{\tau}\right)\]
+will assume that the Glucose, $X$, follows a lognormal distribution:
+$$
+X\mid\mu,\tau\sim \text{Lognormal}\left(\mu,\frac{1}{\tau}\right)
+$$
 and we assume the conjugate prior distribution for the normal
 distribution, that is, a normal-gamma prior distribution:
-\[\mu\mid\tau\sim \text{Normal}\left(m,\frac{1}{c\tau}\right)\]
-
-\[\tau\sim\text{Gamma}\left(\frac{a}{2},\frac{b}{2}\right)\]
+$$
+\mu\mid\tau\sim \text{Normal}\left(m,\frac{1}{c\tau}\right)
+$$
+$$
+\tau\sim\text{Gamma}\left(\frac{a}{2},\frac{b}{2}\right)
+$$
 
 We set the prior parameters.We can use a non informative prior:
 
 ``` r
 m=0; c=0.01; a=0.01; b=0.01;
 ```
-
 <p>
 
-Given the Glucose \(\text{data}=\left\{x_1,\ldots,x_n\right\}\), the
+Given the Glucose $\text{data}=\left\{x_1,\ldots,x_n\right\}$, the
 posterior is equal to:
-\[\mu\mid\tau,\text{data}\sim \text{Normal}\left(m^*,\frac{1}{c^*\tau}\right)\]
-\[\tau\mid\text{data}\sim\text{Gamma}\left(\frac{a^*}{2},\frac{b^*}{2}\right)\]
-where, \[m^{\ast}   =\frac{c m+n\bar{x}}{c+n},\] \[c^{\ast}=c+n,\]
-\[a^{\ast}   =a+n,\]
-\[b^{\ast}   =b+\left(  n-1\right)  s^{2}+\frac{c n}{c+n}(m-\bar{x})^2\]
+$$\mu\mid\tau,\text{data}\sim \text{Normal}\left(m^*,\frac{1}{c^*\tau}\right $$
+$$\tau\mid\text{data}\sim\text{Gamma}\left(\frac{a^*}{2},\frac{b^*}{2}\right)$$
+where, 
+    $$m^{\ast}   =\frac{c m+n\bar{x}}{c+n},\] \[c^{\ast}=c+n,$$
+    $$a^{\ast}   =a+n,$$
+    $$b^{\ast}   =b+\left(  n-1\right)  s^{2}+\frac{c n}{c+n}(m-\bar{x})^2$$
 
 Calculate the observed data values:
 
@@ -231,9 +236,9 @@ legend("topright",c("prior","posterior"),lty=c(1,1),col=c("black","red"))
 
 We obtained the join posterior distribution of the Gaussian parameters
 is:
-\[\mu\mid\tau,\text{data}\sim\text{Normal}\left( 4.68,\frac{1}{497.01\tau}\right)\]
+$$\mu\mid\tau,\text{data}\sim\text{Normal}\left( 4.68,\frac{1}{497.01\tau}\right)$$
 
-\[\tau\mid\text{data}\sim\text{Gamma}\left(\frac{ 497.01}{2},\frac{24.754}{2}\right)\]
+$$\tau\mid\text{data}\sim\text{Gamma}\left(\frac{ 497.01}{2},\frac{24.754}{2}\right)$$
 
 We can use the Monte Carlo sampling, we may obtain a sample of size
 M=10000 from this join distribution:
@@ -270,15 +275,15 @@ quantile(tau.post,c(0.025,0.975))
 ### Predictive Probabilities
 
 Supposing we want to estimate the predictive probability that a future
-value of a Glucose \(X_{n+1}\) is larger than a value \(Y_i\) of
+value of a Glucose $X_{n+1}$ is larger than a value $Y_i$ of
 glucose, given the observed Glucose values:
 
-\[\Pr\left(X_{n+1}\gt log(Y_i)\mid \text{data}\right)\]
+$$\Pr\left(X_{n+1}\gt log(Y_i)\mid \text{data}\right)$$
 
 If we assume a lognormal-gamma for (\(\mu, \tau\)), the predictive
 density is ascaled, shifted Student distribution:
 
-\[\log(X_{n+1})\mid\text{data}\sim\text{SS-Student}\left(m^*,\frac{(c^*+1)b^*}{c^*a^*},a^*\right)\]
+$$\log(X_{n+1})\mid\text{data}\sim\text{SS-Student}\left(m^*,\frac{(c^*+1)b^*}{c^*a^*},a^*\right)$$
 
 We can obtain an approximation of the predictive density and compare it
 with the observed data of log-Glucose:
@@ -321,7 +326,7 @@ lines(x.axis,pt((x.axis-pred.mean)/sqrt(scale),a.ast), col='blue')
 We can obtain the predictive probability that a non-diabetic person has
 a Glucose level higher than 160:
 
-\[\Pr(X_{n+1}\gt;log(160)\mid\mathbf{x})=\Pr\left(t_{a^*}\gt;\frac{4-m^*}{\sqrt{\frac{(c^*+1)b^*}{c^*a^*}}} \right)\]
+$$\Pr(X_{n+1}\gt;log(160)\mid\mathbf{x})=\Pr\left(t_{a^*}\gt;\frac{4-m^*}{\sqrt{\frac{(c^*+1)b^*}{c^*a^*}}} \right)$$
 
 ``` r
 1-pt((log(160)-pred.mean)/sqrt(scale),a.ast)
@@ -443,18 +448,18 @@ probability of failure, explained by the Glucose levels of a persona
 
 We assume a logistic regression for this problem:
 
-We set \(y_i =1\) to a person \(i\) with Diabetes and \(y_i =0\) if a
-person \(i\) doesn’t have Diabetes:
-\[y_i\mid p_i\sim\text{Bernoulli}(p_i)\]where \(p_i\) denotes the
+We set $y_i =1$ to a person $i$ with Diabetes and $y_i =0$ if a
+person $i$ doesn’t have Diabetes:
+$$y_i\mid p_i\sim\text{Bernoulli}(p_i)$$ where $p_i$ denotes the
 diabetes probability of the person \(i\), such that,
-\[ \log\frac{p_i}{1-p_i}= \alpha+\beta x_i\]
+$$\log\frac{p_i}{1-p_i}= \alpha+\beta x_i$$
 
-where \(x_i\) is the Glucose level of the person\(i\)
+where $x_i$ is the Glucose level of the person $i$
 
 We assume proper but non informative priors for the parameters:
-\[\alpha\sim \text{Normal}(0,1000)\] \[\beta\sim \text{Normal}(0,1000)\]
+$$\alpha\sim \text{Normal}(0,1000)$$ $$\beta\sim \text{Normal}(0,1000)$$
 We can make use of MCMC methods to obtain a sample from the posterior of
-\((\alpha,\beta)\)
+$(\alpha,\beta)$
 
 We can achieve this using the MCMCpack that contains the MCMC algorithm
 for obtaining a Bayesian Logistic Regression:
@@ -660,14 +665,14 @@ plot(density(diabetes.prob), main = "Diabetes Probability of Glucose = 170")
 
 We assume a logistic regression for this problem:
 
-We set \(y_i =1\) to a person \(i\) with Diabetes and \(y_i =0\) if a
-person \(i\) doesn’t have Diabetes:
+We set $y_i =1$ to a person \(i\) with Diabetes and $y_i =0$ if a
+person $i$ doesn’t have Diabetes:
 
-\[y_i\mid p_i\sim\text{Bernoulli}(p_i)\] where \(p_i\) denotes the
+$$y_i\mid p_i\sim\text{Bernoulli}(p_i)$$ where $p_i$ denotes the
 diabetes probability of the person \(i\), such that,
-\[ \log\frac{p_i}{1-p_i}= \alpha+X_i\beta \] where \(X_i\) is the
+$$\log\frac{p_i}{1-p_i}= \alpha+X_i\beta$$ where $X_i$ is the
 variables levels of a person (Pregnancies, Glucose, Blood Pressure, BMI,
-Diabetes Pedigree Function, Skin Thickness, Insulin and Age)\(i\)
+Diabetes Pedigree Function, Skin Thickness, Insulin and Age)$i$
 
 We assume proper but non informative priors for the parameters:
 \[\alpha\sim \text{Normal}(0,1000)\]
