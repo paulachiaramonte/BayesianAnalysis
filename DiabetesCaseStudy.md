@@ -187,12 +187,12 @@ m=0; c=0.01; a=0.01; b=0.01;
 ```
 <p>
 
-Given the Glucose $$\text{data}=\left\{x_1,\ldots,x_n\right\}$$, the
+Given the Glucose $X_i$ for i in $1, ..., n$, the
 posterior is equal to:
     
-    $$\mu\mid\tau,\text{data}\sim \text{Normal}\left(m^*,\frac{1}{c^*\tau}\right$$
+    $$\mu\mid\tau,X \sim \text{Normal} (m^*,\frac{1}{c^*\tau})$$
     
-    $$\tau\mid\text{data}\sim\text{Gamma}\left(\frac{a^*}{2},\frac{b^*}{2}\right)$$
+    $$\tau\mid\text{data}\sim\text{Gamma}(\frac{a^*}{2},\frac{b^*}{2})$$
 where, 
     $$m^{\ast}   =\frac{c m+n\bar{x}}{c+n},\] \[c^{\ast}=c+n,$$
     $$a^{\ast}   =a+n,$$
