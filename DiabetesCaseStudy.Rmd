@@ -1,0 +1,548 @@
+---
+title: 'Case Study: Diabetes Prediction'
+# output:
+  # html_document:
+  #   df_print: paged
+  # pdf_document: default
+output: rmarkdown::github_document
+
+---
+
+## Bayesian Data Analysis
+## Paula Chiaramonte
+
+## Pima Indians Diabetes Database
+This [*Pima Indians Diabetes Dataset*](https://www.kaggle.com/datasets/uciml/pima-indians-diabetes-database) is originally from the National Institute of Diabetes and Digestive and Kidney Diseases. The objective of the dataset is to diagnostically predict whether or not a patient has diabetes, based on certain diagnostic measurements included in the dataset.
+
+### Content
+The datasets consists of several medical predictor variables and one target variable, Outcome. Predictor variables includes the number of pregnancies the patient has had, their BMI, insulin level, age, and so on.
+
+## Objective
+Obtain a Bayesian inference of Diabetes using the Glucose values and implement a Logistic Bayesian Model for calculating the probability of a patient having Diabetes as a function of the different diagnostic measurements of each person in the dataset. 
+
+![Diabetes](https://columnadigital.com/wp-content/uploads/2021/12/diabetes.jpg)
+
+## Data Exploration of the Data
+
+```{r}
+data = read.csv("diabetes.csv")
+attach(data)
+head(data)
+```
+
+```{r}
+summary(data)
+```
+The dataset contains: 
+
+* `Pregnancies`: shows the number of times the patient had been pregnant
+
+* `Glucose`: shows the concentration of Glucose after 2 hours of oral glucose concentration in the glucose tolerance test (mg/dL)
+
+* `BloodPressure`: Diastolic blood pressure (mm Hg)
+
+* `SkinThickness`: Triceps skin fold thickness (mm)
+
+* `Insulin`: 2-Hour serum insulin (mu U/ml)
+
+* `BMI`: Body mass index
+
+* `DiabetesPedigreeFunction`: The diabetes Pedigree Function
+
+* `Age`: Age in years
+
+* `Outcome`: 1 if has diabetes and 0 if not
+
+```{r}
+X = data[,-9]
+y = as.factor(data$Outcome)
+y.bin = ifelse(data$Outcome == 1, 1, 0)
+
+VARS = names(X)
+VARS
+```
+
+We can plot the distribution of all of the variables
+```{r}
+par(mfrow=c(4,2))
+par(mar = rep(2, 4))
+for( i in 1:8){
+  hist(X[,i], main = colnames(X)[i],xlab =     colnames(X)[i], col = 'blue')
+}
+
+```
+
+## Bayesian Normal Model
+
+As a first approach, we can observe that the Glucose kind of follows a similar distribution to a Normal distribution
+
+```{r}
+hist(Glucose, breaks = 20)
+```
+
+But if we separate the Glucose of the people with Diabetes and the people with no diabetes, we can observe that the Glucose of people with no Diabetes follows a Normal Distribution, and is kind of separable from the Glucose distribution of diabetes patients
+
+```{r figures-side, fig.show="hold"}
+par(mfrow=c(1,1))
+
+hist(Glucose[y==0], col=rgb(0,0,1,1/4), xlim=c(0,max(Glucose)), ylim=c(0,120), breaks = 20)
+hist(Glucose[y==1], col=rgb(1,0,0,1/4), add=T, breaks=20)
+
+```
+
+We know that Glucose is used to detect diabetic people, so we can use this knowledge to create a Bayesian Model. 
+
+
+With the assumption that the Glucose follows a Normal Distribution, we can obtain a  predictive distribution of the Glucose levels of a non diabetic person, in order to evaluate extreme values of Glucose to detect anomalies, that can be classified as people with possible Diabetes. 
+
+
+### Bayesian Prediction of Glucose levels of non-diabetics patients
+
+We will use a logarithm transformation in order to create a more Normal distribution:
+
+```{r}
+hist(log(Glucose[y==0]), breaks=20, main="Histogram of Log(Glucose) Non-Diabetic People")
+```
+We will assume that the Glucose, $X$, follows a lognormal distribution:
+$$X\mid\mu,\tau\sim \text{Lognormal}\left(\mu,\frac{1}{\tau}\right)$$
+and we assume the conjugate prior distribution for the normal distribution, that is, a normal-gamma prior distribution:
+$$\mu\mid\tau\sim \text{Normal}\left(m,\frac{1}{c\tau}\right)$$ 
+
+$$\tau\sim\text{Gamma}\left(\frac{a}{2},\frac{b}{2}\right)$$
+
+We set the prior parameters.We can use a non informative prior:
+
+```{r}
+m=0; c=0.01; a=0.01; b=0.01;
+```
+
+<p>Given the Glucose \(\text{data}=\left\{x_1,\ldots,x_n\right\}\), 
+the posterior is equal to: 
+$$\mu\mid\tau,\text{data}\sim \text{Normal}\left(m^*,\frac{1}{c^*\tau}\right)$$
+$$\tau\mid\text{data}\sim\text{Gamma}\left(\frac{a^*}{2},\frac{b^*}{2}\right)$$
+where,
+$$m^{\ast}   =\frac{c m+n\bar{x}}{c+n},$$ 
+$$c^{\ast}=c+n,$$ 
+$$a^{\ast}   =a+n,$$ 
+$$b^{\ast}   =b+\left(  n-1\right)  s^{2}+\frac{c n}{c+n}(m-\bar{x})^2$$
+
+Calculate the observed data values:
+```{r}
+log.Gluc = log(Glucose[y==0][Glucose[y==0] > 0])
+n=length(log.Gluc)
+mean.gluc=mean(log.Gluc)
+var.gluc=var(log.Gluc)
+```
+
+Compute the posterior values:
+```{r}
+m.ast=(c*m+n*mean.gluc)/(c+n)
+c.ast=c+n
+a.ast=a+n
+b.ast=b+(n-1)*var.gluc+c*n*(m-mean.gluc)^2/(c+n)
+```
+
+We can compare the prior and the posterior joint distribution for the normal paremeters
+
+```{r}
+library(nclbayes)
+mu=seq(4.5,5,len=1000)
+tau=seq(17,25,len=1000)
+NGacontour(mu,tau,m,c,a,b)
+NGacontour(mu,tau,m.ast,c.ast,a.ast,b.ast,add=TRUE,col="red")
+legend("topright",c("prior","posterior"),lty=c(1,1),col=c("black","red"))
+```
+
+We obtained the join posterior distribution of the Gaussian parameters is:
+$$\mu\mid\tau,\text{data}\sim\text{Normal}\left( 4.68,\frac{1}{497.01\tau}\right)$$
+
+$$\tau\mid\text{data}\sim\text{Gamma}\left(\frac{ 497.01}{2},\frac{24.754}{2}\right)$$
+
+
+We can use the Monte Carlo sampling, we may obtain a sample of size M=10000 from this join distribution:
+
+```{r}
+M=10000
+tau.post=rgamma(M,shape=a.ast/2,rate=b.ast/2)
+mu.post=rnorm(M,mean=m.ast,sd=sqrt(1/(c.ast*tau.post)))
+plot(mu.post,tau.post,col="darkgrey")
+NGacontour(mu,tau,m.ast,c.ast,a.ast,b.ast,col="red",add=T)
+
+```
+
+With this sample from the joint posterior distribution we can obtain the 95% credible interval for $\mu$:
+```{r}
+quantile(mu.post,c(0.025,0.975))
+```
+
+And also a 95% credible interval for $\tau$:
+
+```{r}
+quantile(tau.post,c(0.025,0.975))
+```
+
+### Predictive Probabilities
+
+Supposing we want to estimate the predictive probability that a future value of a Glucose \(X_{n+1}\) is larger than a value \(Y_i\) of glucose, given the observed Glucose values:
+
+$$\Pr\left(X_{n+1}\gt log(Y_i)\mid \text{data}\right)$$
+
+If we assume a lognormal-gamma for (\(\mu, \tau\)), the predictive density is ascaled, shifted Student distribution:
+
+\[\log(X_{n+1})\mid\text{data}\sim\text{SS-Student}\left(m^*,\frac{(c^*+1)b^*}{c^*a^*},a^*\right)\]
+
+We can obtain an approximation of the predictive density and compare it with the observed data of log-Glucose:
+```{r}
+hist(log.Gluc,freq=F, breaks=20)
+x.axis=seq(0,200,by=0.01)
+pred.mean=m.ast
+scale=(c.ast+1)*b.ast/(c.ast*a.ast)
+lines(x.axis,dt((x.axis-pred.mean)/sqrt(scale),a.ast)/sqrt(scale))
+```
+The distribution samples really good the observed data
+
+We can plot it with the observed data of the log-Glucose of Diabetic people:
+```{r}
+hist(log.Gluc,freq=F, breaks=20)
+hist(log(Glucose[y==1][Glucose[y==1] > 0]), freq=F, breaks=20, add=T, col=rgb(1,0,0,1/4))
+x.axis=seq(0,200,by=0.01)
+pred.mean=m.ast
+scale=(c.ast+1)*b.ast/(c.ast*a.ast)
+lines(x.axis,dt((x.axis-pred.mean)/sqrt(scale),a.ast)/sqrt(scale))
+
+```
+
+We can compare the empirical cds with the predictive cdf:
+```{r}
+plot(ecdf(log.Gluc))
+plot(ecdf(log(Glucose[y==1][Glucose[y==1] > 0])), add=T, col='red')
+lines(x.axis,pt((x.axis-pred.mean)/sqrt(scale),a.ast), col='blue')
+```
+
+We can obtain the predictive probability that a non-diabetic person has a Glucose level higher than 160:
+
+$$\Pr(X_{n+1}\gt;log(160)\mid\mathbf{x})=\Pr\left(t_{a^*}\gt;\frac{4-m^*}{\sqrt{\frac{(c^*+1)b^*}{c^*a^*}}} \right)$$
+
+```{r}
+1-pt((log(160)-pred.mean)/sqrt(scale),a.ast)
+```
+
+Is really low, which means that is strange for a Non-diabetic person to have a Glucose level (in the tolerance test) higher than 160, which can be  an extreme values (which can be related to a Diabetes value). 
+
+We can obtain a sample of predictive glucose values, by applying the exponent of the posterior mean and posterior standard deviation of the lognormal distribution:
+```{r}
+M=10000
+glu.pred=rnorm(M,mean=mu.post, sd=1/sqrt(tau.post))
+hist(glu.pred, breaks=20 , main="Predictive distribution of log-Glucose")
+
+```
+
+We can obtain the predictive distributions, with the real values of the glucose, by applying the exponent:
+
+```{r}
+M=10000
+glu.pred_exp=exp(rnorm(M,mean=mu.post, sd=1/sqrt(tau.post)))
+hist(glu.pred_exp, breaks=20 , main="Predictive distribution of Glucose")
+```
+
+
+In order to obtain the real values of the Glucose, and not the logarithm, we apply the exponent: 
+
+We can observe that the mean value of the Glucose for Non-Diabetic people is:
+
+```{r}
+exp(mean(glu.pred))
+```
+
+We can interpretated the predictive intervals as the values that are inside the range of normal values for Non-diabetic people, which means that if the glucose is higher than those values, then the patient may have diabetes. 
+
+If we choose a predictive interval of 5%, the normal values of the glucose are between:
+
+```{r}
+exp(quantile(glu.pred, c(0.025, 0.975)))
+```
+
+If we choose a right confidence interval of 5% and 10%, the normal values of glucose are between:
+```{r}
+exp(quantile(glu.pred, c(0.95)))
+exp(quantile(glu.pred, c(0.9)))
+```
+
+And the predictive probability of a non diabetic patient having a glucose value higher than 160 is:
+```{r}
+mean(glu.pred > log(160))
+```
+
+![Glucose Chart](https://www.cdc.gov/diabetes/images/basics/CDC_Diabetes_Social_Ad_Concept_A2_Facebook.png){width=40%}
+
+We can compare with the medical values, and observe that the outliers, or not significant values in the Predictive Distribution correspond to values of the "Glucose Tolerance Levels" to not normal values, but values related to pre-diabetes or diabetes. So we can say that our inference makes sense. 
+
+## Bayesian Logistic Regression
+
+We are going to plot the boxplots for each variable in order to observe how are different values for Diabetic people and Non-diabetic people
+
+```{r}
+par(mfrow=c(2,2))
+par(mar = rep(2, 4))
+par(mfrow = c(2,2))
+for( i in 1:8){
+  boxplot(X[,i]~y, main = names(X)[i])
+}
+
+```
+
+We can observe that when a person has higher Glucose levels it is more associated with Diabetes. So using this variable we can create a first approach of an Uni-variate Bayesian Logistic Regression of the probability of failure, explained by the Glucose levels of a persona
+
+### Uni-variate Bayesian Logistic Regression
+
+We assume a logistic regression for this problem:
+
+We set $y_i =1$ to a person $i$ with Diabetes and  $y_i =0$ if a person $i$ doesn't have Diabetes: 
+$$y_i\mid p_i\sim\text{Bernoulli}(p_i)$$where $p_i$ denotes the diabetes probability of the person $i$,  such that, 
+$$ \log\frac{p_i}{1-p_i}= \alpha+\beta x_i$$
+
+where $x_i$ is the Glucose level of the person$i$
+
+We assume proper but non informative priors for the parameters: 
+$$\alpha\sim \text{Normal}(0,1000)$$
+$$\beta\sim \text{Normal}(0,1000)$$
+We can make use of MCMC methods to obtain a sample from the posterior of $(\alpha,\beta)$ 
+
+We can achieve this using the MCMCpack that contains the MCMC algorithm for obtaining a Bayesian Logistic Regression:
+
+```{r}
+library(MCMCpack)
+
+logit.mcmc <- MCMClogit(y.bin~Glucose,burnin=5000, mcmc=20000, thin = 10,data=data)
+```
+
+The logit.mcmc model implements the MCMC algorithm for 11000 iterations, in which the first 1000 iteratiosn are used as burn-in iterations and the other 10000 iterations are keep. 
+
+We can plot the trace of convergence and the posterior densities of the intercept $\alpha$ and the slope $\beta$:
+```{r}
+plot(logit.mcmc)
+```
+
+There is no autocorrelation:
+```{r}
+par(mfrow=c(1,2))
+par(mar = rep(1, 4))
+acf(logit.mcmc[,1], main='ACF of Intercept')
+acf(logit.mcmc[,2], main='ACF of Glucose Coeff')
+
+```
+
+```{r}
+summary(logit.mcmc)
+```
+We can compare it with a classical Logistic Regression
+
+```{r}
+fit = glm(y~Glucose,family = "binomial")
+summary(fit)
+```
+The results are very similar. 
+
+But the advantage of a Bayesian Logistic Regression is that we can obtain a posterior distribution of the probability of a person having diabetes. For example, we can obtain the posterior distribution of the probability of Diabetes of someone with glucose level of 170 mg/dL
+
+
+The trace and the density of probability looks good:
+```{r}
+
+library(boot)
+glucose_level = 170
+diabetes.prob=inv.logit(logit.mcmc[,1]+glucose_level*logit.mcmc[,2])
+plot(diabetes.prob)
+
+
+```
+
+We can obtain a summary of the probability of a person having diabetes with a glucose level of 170 mg/dL. With the Bayesian Logistic Regression we can obtain the quantiles, that can be used for evaluate the veracity or significance of the probability. 
+```{r}
+summary(diabetes.prob)
+```
+
+And we can plot the probability distribution, for a better visualization of the results:
+```{r}
+hist(diabetes.prob,freq=F, xlim = c(0,1))
+```
+
+And we can obtain the mean probability, the median probability and the quantiles for the probability
+```{r}
+mean(diabetes.prob)
+median(diabetes.prob)
+quantile(diabetes.prob,c(0.025,0.975))
+
+```
+
+```{r}
+y.pred=rbinom(1000,size=1,prob=diabetes.prob)
+
+plot(density(diabetes.prob), main = "Diabetes Probability of Glucose = 170")
+```
+
+### Multi-variate Logistic Regression
+
+We assume a logistic regression for this problem:
+
+We set $y_i =1$ to a person $i$ with Diabetes and  $y_i =0$ if a person $i$ doesn't have Diabetes: 
+
+$$y_i\mid p_i\sim\text{Bernoulli}(p_i)$$
+where $p_i$ denotes the diabetes probability of the person $i$,  such that, 
+$$ \log\frac{p_i}{1-p_i}= \alpha+X_i\beta $$ 
+where $X_i$ is the variables levels of a person (Pregnancies, Glucose, Blood Pressure, BMI, Diabetes Pedigree Function, Skin Thickness, Insulin and Age)$i$
+
+We assume proper but non informative priors for the parameters: 
+$$\alpha\sim \text{Normal}(0,1000)$$
+$$\beta_i\sim \text{Normal}(0,1000)$$
+
+
+```{r}
+logit.mcmc <- MCMClogit(y.bin~Pregnancies + Glucose + BloodPressure + BMI + DiabetesPedigreeFunction +SkinThickness + Insulin + Age, 
+                        burnin=2000, mcmc=15000, thin =20, data=X)
+```
+
+We can evaluate the trace of the convergence: 
+```{r}
+par(mar = rep(2, 4))
+par(mfrow = c(4,2))
+plot(logit.mcmc)
+
+```
+We can plot the autocorrelations, and observe that there is no autocorrelation in any of the coefficients
+```{r}
+par(mfrow=c(4,2))
+par(mar = rep(2, 4))
+for(i in 1:8){
+  acf(logit.mcmc[,i])
+}
+```
+
+```{r}
+summary(logit.mcmc)
+```
+We can observe that the coefficients for the variables `SkinThickness`, `Insulin` and `Age` are not significant, so we can delete them. 
+
+We create another model with the variables that are significant: 
+
+```{r}
+
+logit.mcmc <- MCMClogit(y.bin~Glucose + BloodPressure + 
+                          BMI + DiabetesPedigreeFunction,
+                        burnin=2000, mcmc=15000, thin =20, data=data)
+
+summary(logit.mcmc)
+
+```
+
+We can compare it with a Classical Logistic Regression
+
+```{r}
+fit = glm(y~Pregnancies + Glucose + BloodPressure + BMI + DiabetesPedigreeFunction,family = "binomial")
+summary(fit)
+```
+
+
+We plot the trace of convergence and the autocorrelations, and observe that there is no autocorrelation in the coefficients
+```{r}
+par(mar = rep(2, 4))
+par(mfrow = c(4,2))
+plot(logit.mcmc)
+
+```
+
+
+```{r}
+# par(mfrow=c(5,1))
+# # par(mar = rep(1,5))
+# par(mfrow=c(5,1))
+par(mar = rep(2, 4))
+par(mfrow = c(4,2))
+for(i in 1:5){
+  acf(logit.mcmc[,i])
+}
+```
+
+
+### Predictive Probability:
+
+We can test the model, by obtaining the probability of diabetes of a patient with the following values (which corresponds to a patient with No Diabetes)
+
+```{r}
+idx = 700
+rw = data[idx,]
+rw
+```
+
+```{r}
+
+# data[700, ]
+idx = 700
+rw = data[idx,]
+new_data = c(rw$Glucose, rw$BloodPressure, 
+             rw$BMI, rw$DiabetesPedigreeFunction)
+
+pred_logit = logit.mcmc[,1] + new_data[1]*logit.mcmc[,2] + 
+  new_data[2]*logit.mcmc[,3] + new_data[3]*logit.mcmc[,4] + 
+  new_data[4]*logit.mcmc[,5]
+diabetes.prob=inv.logit(pred_logit)
+hist(diabetes.prob,freq=F, xlim = c(0,1))
+mean(diabetes.prob)
+median(diabetes.prob)
+quantile(diabetes.prob,c(0.025,0.975))
+
+```
+
+A patient with the following values (which corresponds to a patient with Diabetes)
+```{r}
+idx = 133
+rw = data[idx,]
+rw
+```
+
+```{r}
+# data[133, ]
+idx = 133
+rw = data[idx,]
+new_data = c(rw$Glucose, rw$BloodPressure, 
+             rw$BMI, rw$DiabetesPedigreeFunction)
+pred_logit = logit.mcmc[,1] + new_data[1]*logit.mcmc[,2] + 
+  new_data[2]*logit.mcmc[,3] + new_data[3]*logit.mcmc[,4] + 
+  new_data[4]*logit.mcmc[,5]
+diabetes.prob=inv.logit(pred_logit)
+hist(diabetes.prob,freq=F, xlim = c(0,1))
+mean(diabetes.prob)
+median(diabetes.prob)
+quantile(diabetes.prob,c(0.025,0.975))
+```
+
+And a patient with the following values(Which corresponds to a patient with no Diabetes)
+```{r}
+idx = 11
+rw = data[idx,]
+rw
+```
+
+
+```{r}
+# data[133, ]
+idx = 11
+rw = data[idx,]
+new_data = c(rw$Glucose, rw$BloodPressure, 
+             rw$BMI, rw$DiabetesPedigreeFunction)
+pred_logit = logit.mcmc[,1] + new_data[1]*logit.mcmc[,2] + 
+  new_data[2]*logit.mcmc[,3] + new_data[3]*logit.mcmc[,4] + 
+  new_data[4]*logit.mcmc[,5]
+diabetes.prob=inv.logit(pred_logit)
+hist(diabetes.prob,freq=F, xlim = c(0,1))
+mean(diabetes.prob)
+median(diabetes.prob)
+quantile(diabetes.prob,c(0.025,0.975))
+
+```
+
+
+# Conclusion
+* We were able to obtain a Bayesian Distribution of the Glucose levels of non Diabetic people and a Bayesian Predictive Distribution of the Glucose levels of non diabetic people, that can be use for evaluating the extremes values of Glucose levels. 
+* We were able to implement a univariate Bayesian Logistic Regression, using as feature the Glucose levels, in order to predict the probability of a person having Diabetes, which allowed us to obtain several statistics measures of the distribution probability of a single person having Diabetes. 
+* With the Bayesian Logistic Regression we also implemented a multivariate Bayesian Logistic Regression with the significant measures, which allowed us to  predict the probability of a person having Diabetes, and obtain several statistics measures of the distribution probability of a single person having Diabetes. 
